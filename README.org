@@ -1,0 +1,33 @@
+* PICO-8 mode
+
+  *pico8-mode* is a major mode for Emacs which supports PICO-8 .p8 file
+  code editing. It's based on [[https://github.com/immerrr/lua-mode][lua-mode]].
+
+** Features
+
+  - Sets a dimmer color for non-Lua sections of the .p8 file
+  - Offers basic auto-complete
+    - Supports [[https://github.com/company-mode/company-mode][company-mode]] and completion-at-point
+    - Completes PICO-8 builtins, functions, variables and arguments
+      with some scoping
+  - Navigation with /xref/
+  - Documentation with /eldoc/
+    - If PICO-8 manual path is set, then it shows builtin
+      documentation from there.
+
+** Setup
+
+   For now do an manual installation, as it's not in MELPA.
+
+   Customization variables are available at group *pico-8*.
+
+   For documentation lookup to work, set *pico8-documentation-file* to
+   an absolute path to "pico-8.txt" which is included with PICO-8.
+   After setting this variable, run *pico8-build-documentation* function
+   to force a rebuild. This happens automatically when the mode is
+   loaded.
+
+** Notes
+
+   This mode uses some internal functiosn from [[https://github.com/immerrr/lua-mode][lua-mode]], which means
+   that it might fail if *lua-mode* updates in an incompatible way.
