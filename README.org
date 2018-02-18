@@ -27,6 +27,11 @@
    to force a rebuild. This happens automatically when the mode is
    loaded.
 
+*** Requirements
+
+   - [[https://github.com/immerrr/lua-mode][lua-mode]]
+   - Emacs >= 25.1 (tested with 26)
+
 ** Notes
 
    This mode uses some internal functions from [[https://github.com/immerrr/lua-mode][lua-mode]], which means
