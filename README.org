@@ -1,6 +1,6 @@
 * PICO-8 mode
 
-  *pico8-mode* is a major mode for Emacs which supports PICO-8 .p8 file
+  *pico8-mode* is a major mode for Emacs which supports [[https://www.lexaloffle.com/pico-8.php][PICO-8]] .p8 file
   code editing. It's based on [[https://github.com/immerrr/lua-mode][lua-mode]].
 
 ** Features
@@ -29,5 +29,5 @@
 
 ** Notes
 
-   This mode uses some internal functiosn from [[https://github.com/immerrr/lua-mode][lua-mode]], which means
-   that it might fail if *lua-mode* updates in an incompatible way.
+   This mode uses some internal functions from [[https://github.com/immerrr/lua-mode][lua-mode]], which means
+   that it might fail if lua-mode updates in an incompatible way.
