@@ -30,6 +30,13 @@
 ;; TODO: Clean up and refactor
 ;; TODO: Highlight current argument with eldoc
 
+;; TODO: Optimize?
+;;       The code is currently really really inefficient, it goes through the
+;;       file multiple times when doing navigation or completion. It also goes
+;;       through the file to find images to render, and the image scaler is
+;;       quite crude. But nothing really shows up in the profiler, and .p8
+;;       files are so small that it doesn't show up in use at all.
+
 (defgroup pico8 nil
   "pico8 major mode"
   :prefix "pico8-"
@@ -44,6 +51,11 @@ Enables documentation annotations with eldoc and company"
 
 (defcustom pico8-dim-non-code-sections t
   "If enabled, then dim all sections that are not Lua code"
+  :type 'boolean
+  :group 'pico8)
+
+(defcustom pico8-create-images t
+  "If enabled, then image data is rendered inline."
   :type 'boolean
   :group 'pico8)
 
@@ -152,6 +164,24 @@ Enables documentation annotations with eldoc and company"
     ("coresume" "c [p0 p1 ..]")
     ("costatus" "c")
     ("yield" "" "Yield coroutine execution")))
+
+(defconst pico8--palette
+  (concat "0 c #000000\n"
+          "1 c #1d2b53\n"
+          "2 c #7e2553\n"
+          "3 c #008751\n"
+          "4 c #ab5236\n"
+          "5 c #5f574f\n"
+          "6 c #c2c3c7\n"
+          "7 c #fff1e8\n"
+          "8 c #ff004d\n"
+          "9 c #ffa300\n"
+          "a c #ffec27\n"
+          "b c #00e436\n"
+          "c c #29adff\n"
+          "d c #83769c\n"
+          "e c #ff77a8\n"
+          "f c #ffccaa\n"))
 
 (defconst pico8--builtins
   (seq-map (lambda (x) (apply #'pico8--make-builtin x)) pico8--builtins-list))
@@ -454,6 +484,76 @@ Including Lua and pico8 built-ins."
           (setq pico8--lua-block-end-tag (match-string-no-properties 1))
           (setq pico8--lua-block-end (match-beginning 0)))))))
 
+(defun pico8--line-length (point)
+  "Get line length at `point'"
+  (save-excursion
+    (goto-char point)
+    (- (line-end-position) (line-beginning-position))))
+
+(defun pico8--get-scaled-image-data (start end)
+  "Get scaled pico8 image data in in the region between `start' and `end'.
+Doubles the image data, otherwise it's too tiny to look at."
+  (string-join
+   (seq-map
+    (lambda (x)
+      (let ((line (replace-regexp-in-string "\\([0-9a-f]\\)" "\\1\\1" x)))
+        (concat line "\n" line)))
+    (split-string (buffer-substring-no-properties start end) "\n" t))
+   "\n"))
+
+(defun pico8--generate-image (start end)
+  "Generate an image from pico8 data in the region between `start' and `end'."
+  (let ((height (number-to-string (* 2 (count-lines start end))))
+        (width (number-to-string (* 2 (pico8--line-length start)))))
+    (create-image
+     (concat "! XPM2\n" width " " height " 16 1\n"
+             pico8--palette
+             (pico8--get-scaled-image-data start end))
+     'xpm t)))
+
+(defvar pico8--gfx-overlays nil '())
+(make-variable-buffer-local 'pico8--gfx-overlays)
+
+(defun pico8--put-gfx-overlay (beg end)
+  "Put pico8 gfx overlay in region."
+  (interactive "r")
+  (setq-local pico8--gfx-overlays
+              (seq-filter
+               (lambda (overlay)
+                 (if (and (= beg (overlay-start overlay))
+                          (= end (overlay-end overlay)))
+                     (delete-overlay overlay)
+                   t))
+               pico8--gfx-overlays))
+  (let ((overlay (make-overlay beg end)))
+    (overlay-put overlay 'display (pico8--generate-image beg end))
+    (push overlay pico8--gfx-overlays))
+  nil)
+
+(defun pico8--create-image-overlays ()
+  "Create XPM image overlays over pico8 image data"
+  (save-excursion
+    (save-restriction
+      (widen)
+      (goto-char 1)
+      (while (search-forward-regexp "__\\([a-z]+\\)" nil t 1)
+        (forward-line 1)
+        (let ((start (point)))
+          (when (or (string= "gfx" (match-string-no-properties 1))
+                    (string= "label" (match-string-no-properties 1)))
+            (save-excursion
+              (if (search-forward-regexp "__[a-z]+__" nil t 1)
+                  (progn
+                    (forward-line -1)
+                    (end-of-line))
+                (forward-paragraph))
+              (pico8--put-gfx-overlay start (point)))))))))
+
+(defun pico8--remove-image-overlays ()
+  "Remove all XPM image overlays"
+  (seq-do (lambda (overlay) (delete-overlay overlay)) pico8--gfx-overlays)
+  (setq-local pico8--gfx-overlays '()))
+
 (defun pico8--syntax-propertize (beg end)
   "pico8 syntax-table propertize function.
 Sets an overlay on non-Lua code."
@@ -474,7 +574,11 @@ Sets an overlay on non-Lua code."
   (setq-local eldoc-documentation-function #'pico8--eldoc-documentation)
   (setq-local syntax-propertize-function #'pico8--syntax-propertize)
   (when (pico8--has-documentation-p)
-    (pico8-build-documentation)))
+    (pico8-build-documentation))
+  (when pico8-create-images
+    (add-hook 'before-revert-hook 'pico8--remove-image-overlays)
+    (add-hook 'after-revert-hook 'pico8--create-image-overlays)
+    (pico8--create-image-overlays)))
 
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.p8\\'" . pico8-mode))

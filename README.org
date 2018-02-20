@@ -14,6 +14,7 @@
   - Documentation with /eldoc/
     - If PICO-8 manual path is set, then it shows builtin
       documentation from there.
+  - Renders sprites and labels inline in the buffer.
 
 ** Setup
 
