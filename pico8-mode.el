@@ -172,22 +172,22 @@ Enables documentation annotations with eldoc and company"
     ("yield" "" "Yield coroutine execution")))
 
 (defconst pico8--palette
-  (concat "0 c #000000\n"
-          "1 c #1d2b53\n"
-          "2 c #7e2553\n"
-          "3 c #008751\n"
-          "4 c #ab5236\n"
-          "5 c #5f574f\n"
-          "6 c #c2c3c7\n"
-          "7 c #fff1e8\n"
-          "8 c #ff004d\n"
-          "9 c #ffa300\n"
-          "a c #ffec27\n"
-          "b c #00e436\n"
-          "c c #29adff\n"
-          "d c #83769c\n"
-          "e c #ff77a8\n"
-          "f c #ffccaa\n"))
+  (concat "\"0 c #000000\",\n"
+          "\"1 c #1d2b53\",\n"
+          "\"2 c #7e2553\",\n"
+          "\"3 c #008751\",\n"
+          "\"4 c #ab5236\",\n"
+          "\"5 c #5f574f\",\n"
+          "\"6 c #c2c3c7\",\n"
+          "\"7 c #fff1e8\",\n"
+          "\"8 c #ff004d\",\n"
+          "\"9 c #ffa300\",\n"
+          "\"a c #ffec27\",\n"
+          "\"b c #00e436\",\n"
+          "\"c c #29adff\",\n"
+          "\"d c #83769c\",\n"
+          "\"e c #ff77a8\",\n"
+          "\"f c #ffccaa\",\n"))
 
 (defconst pico8--builtins
   (seq-map (lambda (x) (apply #'pico8--make-builtin x)) pico8--builtins-list))
@@ -502,19 +502,20 @@ Doubles the image data, otherwise it's too tiny to look at."
   (string-join
    (seq-map
     (lambda (x)
-      (let ((line (replace-regexp-in-string "\\([0-9a-f]\\)" "\\1\\1" x)))
-        (concat line "\n" line)))
+      (let ((line (concat "\"" (replace-regexp-in-string "\\([0-9a-f]\\)" "\\1\\1" x) "\"")))
+        (concat line ",\n" line)))
     (split-string (buffer-substring-no-properties start end) "\n" t))
-   "\n"))
+   ",\n"))
 
 (defun pico8--generate-image (start end)
   "Generate an image from pico8 data in the region between `start' and `end'."
   (let ((height (number-to-string (* 2 (count-lines start end))))
         (width (number-to-string (* 2 (pico8--line-length start)))))
     (create-image
-     (concat "! XPM2\n" width " " height " 16 1\n"
-             pico8--palette
-             (pico8--get-scaled-image-data start end))
+     (concat "/* XPM */\nstatic char *xpm[] ={\n"
+	     "\"" width " " height " 16 1\",\n"
+	     pico8--palette
+	     (pico8--get-scaled-image-data start end))
      'xpm t)))
 
 (defvar pico8--gfx-overlays nil '())
@@ -582,7 +583,8 @@ Sets an overlay on non-Lua code."
   (when (pico8--has-documentation-p)
     (pico8-build-documentation))
   (when (and pico8-create-images
-             (not (eq system-type 'darwin)))
+	     (display-graphic-p)
+	     (image-type-available-p 'xpm))
     (add-hook 'before-revert-hook 'pico8--remove-image-overlays)
     (add-hook 'after-revert-hook 'pico8--create-image-overlays)
     (pico8--create-image-overlays)))
