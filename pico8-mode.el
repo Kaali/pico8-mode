@@ -26,6 +26,7 @@
 (require 'rx)
 (require 'cl-lib)
 (require 'xref)
+(require 'subr-x)
 
 ;; TODO: Clean up and refactor
 ;; TODO: Highlight current argument with eldoc
