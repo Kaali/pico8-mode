@@ -581,7 +581,8 @@ Sets an overlay on non-Lua code."
   (setq-local syntax-propertize-function #'pico8--syntax-propertize)
   (when (pico8--has-documentation-p)
     (pico8-build-documentation))
-  (when pico8-create-images
+  (when (and pico8-create-images
+             (not (eq system-type 'darwin)))
     (add-hook 'before-revert-hook 'pico8--remove-image-overlays)
     (add-hook 'after-revert-hook 'pico8--create-image-overlays)
     (pico8--create-image-overlays)))
