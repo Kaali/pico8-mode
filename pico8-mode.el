@@ -38,6 +38,11 @@
 ;;       quite crude. But nothing really shows up in the profiler, and .p8
 ;;       files are so small that it doesn't show up in use at all.
 
+;; Fix Emacs 25 support by defining when-let*
+(eval-when-compile
+  (unless (fboundp 'when-let*)
+    (defalias 'when-let* 'when-let)))
+
 (defgroup pico8 nil
   "pico8 major mode"
   :prefix "pico8-"
