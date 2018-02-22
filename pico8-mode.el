@@ -513,9 +513,9 @@ Doubles the image data, otherwise it's too tiny to look at."
         (width (number-to-string (* 2 (pico8--line-length start)))))
     (create-image
      (concat "/* XPM */\nstatic char *xpm[] ={\n"
-	     "\"" width " " height " 16 1\",\n"
-	     pico8--palette
-	     (pico8--get-scaled-image-data start end))
+             "\"" width " " height " 16 1\",\n"
+             pico8--palette
+             (pico8--get-scaled-image-data start end))
      'xpm t)))
 
 (defvar pico8--gfx-overlays nil '())
@@ -583,8 +583,8 @@ Sets an overlay on non-Lua code."
   (when (pico8--has-documentation-p)
     (pico8-build-documentation))
   (when (and pico8-create-images
-	     (display-graphic-p)
-	     (image-type-available-p 'xpm))
+             (display-graphic-p)
+             (image-type-available-p 'xpm))
     (add-hook 'before-revert-hook 'pico8--remove-image-overlays)
     (add-hook 'after-revert-hook 'pico8--create-image-overlays)
     (pico8--create-image-overlays)))
