@@ -473,22 +473,34 @@ Including Lua and pico8 built-ins."
 
 (defun pico8--put-non-lua-overlay (beg end)
   "Put pico8 non-Lua overlay in region."
-  (remove-overlays beg end 'face 'pico8--non-lua-overlay)
   (overlay-put (make-overlay beg end) 'face 'pico8--non-lua-overlay))
 
-(defun pico8--scan-for-lua-block-in-region (beg end)
-  "Try to find lua block in the region."
+(defun pico8--do-scan-for-lua-block-in-region (beg end)
+  "Actually run the scan for pico8--scan-for-lua-block-in-region"
   (save-excursion
     (goto-char beg)
-    (while (search-forward-regexp "__\\([a-z]+\\)__" end t 1)
+    (while (search-forward-regexp "^__\\([a-z]+\\)__$" end t 1)
       (if (string= "lua" (match-string 1))
           (setq pico8--lua-block-start (match-end 0))
-        (when (and (> (match-beginning 0) pico8--lua-block-start)
+        (when (and (> (match-beginning 0) (or pico8--lua-block-start 1))
                    (or (not pico8--lua-block-end)
                        (string= (match-string-no-properties 1) pico8--lua-block-end-tag)
                        (< (match-beginning 0) pico8--lua-block-end)))
           (setq pico8--lua-block-end-tag (match-string-no-properties 1))
           (setq pico8--lua-block-end (match-beginning 0)))))))
+
+(defun pico8--scan-for-lua-block-in-region (beg end)
+  "Try to find lua block in the region.
+If a __lua__ line is found, then that is set as the start for a
+lua block. If other __def__ lines are found, they might be chosen
+as an end position for the lua block."
+  (when (and pico8--lua-block-start (<= beg pico8--lua-block-start end))
+    (setq pico8--lua-block-start nil))
+  (when (and pico8--lua-block-end (<= beg pico8--lua-block-end end))
+    (setq pico8--lua-block-end nil))
+  (pico8--do-scan-for-lua-block-in-region beg end)
+  (unless (and pico8--lua-block-start pico8--lua-block-end)
+    (pico8--do-scan-for-lua-block-in-region (point-min) (point-max))))
 
 (defun pico8--line-length (point)
   "Get line length at `point'"
@@ -563,14 +575,18 @@ Doubles the image data, otherwise it's too tiny to look at."
 
 (defun pico8--syntax-propertize (beg end)
   "pico8 syntax-table propertize function.
-Sets an overlay on non-Lua code."
+Sets an overlay on non-Lua code. And also keeps track of lua code
+region."
   (lua--propertize-multiline-bounds beg end)
   (pico8--scan-for-lua-block-in-region beg end)
+  ;; TODO: Revamp
   (when pico8-dim-non-code-sections
-    (when (and pico8--lua-block-start (< beg pico8--lua-block-start))
-      (pico8--put-non-lua-overlay beg (min end pico8--lua-block-start)))
-    (when (and pico8--lua-block-end (> end pico8--lua-block-end))
-      (pico8--put-non-lua-overlay (max beg pico8--lua-block-end) end))))
+    (remove-overlays (point-min) (point-max) 'face 'pico8--non-lua-overlay)
+    (when pico8--lua-block-start
+      (pico8--put-non-lua-overlay (point-min) pico8--lua-block-start))
+    (when pico8--lua-block-end
+      (pico8--put-non-lua-overlay pico8--lua-block-end (point-max)))
+    ))
 
 ;;;###autoload
 (define-derived-mode pico8-mode lua-mode "pico8"
