@@ -28,6 +28,10 @@
    to force a rebuild. This happens automatically when the mode is
    loaded.
 
+   To be able to run PICO-8 from Emacs, set the *pico8-executable-path* variable
+   to the =pico8= executable. E.g. =~/Downloads/pico-8/pico8=. Call
+   *pico8-run-cartridge* and *pico8-kill-process* respectively.
+
 *** Requirements
 
    - [[https://github.com/immerrr/lua-mode][lua-mode]]

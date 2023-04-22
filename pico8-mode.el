@@ -65,6 +65,11 @@ Enables documentation annotations with eldoc and company"
   :type 'boolean
   :group 'pico8)
 
+(defcustom pico8-executable-path ""
+  "Full path to pico8 executable."
+  :type 'file
+  :group 'pico8)
+
 (defface pico8--non-lua-overlay
   '((((background light)) :foreground "grey90")
     (((background dark)) :foreground "grey10"))
@@ -587,6 +592,32 @@ region."
     (when pico8--lua-block-end
       (pico8--put-non-lua-overlay pico8--lua-block-end (point-max)))
     ))
+
+(defvar pico8--process nil
+  "The currently running PICO-8 process")
+
+(defun pico8--process-running? ()
+  "Return t if a PICO-8 process is already running"
+  (when pico8--process
+    (eq (process-status pico8--process)
+        'run)))
+
+(defun pico8--confirm-and-kill-process ()
+  (when (y-or-n-p "PICO-8 is already running. Kill process?")
+    (pico8-kill-process)))
+
+(defun pico8-run-cartridge ()
+  "Run the file visited by the current buffer as PICO-8 cartridge"
+  (interactive)
+  (when (pico8--process-running?)
+    (pico8--confirm-and-kill-process))
+  (setq pico8--process (start-process "pico8-process" "pico8-output"
+                                      pico8-executable-path "-run" (buffer-file-name))))
+
+(defun pico8-kill-process ()
+  "Kill the currently running PICO-8 process by sending SIGQUIT"
+  (interactive)
+  (quit-process pico8--process))
 
 ;;;###autoload
 (define-derived-mode pico8-mode lua-mode "pico8"
