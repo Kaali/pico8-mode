@@ -192,7 +192,24 @@ Enables documentation annotations with eldoc and company"
           "\"c c #29adff\",\n"
           "\"d c #83769c\",\n"
           "\"e c #ff77a8\",\n"
-          "\"f c #ffccaa\",\n"))
+          "\"f c #ffccaa\",\n"
+          ;; alternate palette
+          "\"g c #2f1e1b\",\n"
+          "\"h c #142337\",\n"
+          "\"i c #472638\",\n"
+          "\"j c #005459\",\n"
+          "\"k c #7a322e\",\n"
+          "\"l c #4d363d\",\n"
+          "\"m c #a58679\",\n"
+          "\"n c #f6ec89\",\n"
+          "\"o c #ca194f\",\n"
+          "\"p c #ff6a34\",\n"
+          "\"q c #9ee452\",\n"
+          "\"r c #00b253\",\n"
+          "\"s c #005eaf\",\n"
+          "\"t c #794863\",\n"
+          "\"u c #ff6c5c\",\n"
+          "\"v c #ff9a83\",\n"))
 
 (defconst pico8--builtins
   (seq-map (lambda (x) (apply #'pico8--make-builtin x)) pico8--builtins-list))
@@ -519,7 +536,7 @@ Doubles the image data, otherwise it's too tiny to look at."
   (string-join
    (seq-map
     (lambda (x)
-      (let ((line (concat "\"" (replace-regexp-in-string "\\([0-9a-f]\\)" "\\1\\1" x) "\"")))
+      (let ((line (concat "\"" (replace-regexp-in-string "\\([0-9a-v]\\)" "\\1\\1" x) "\"")))
         (concat line ",\n" line)))
     (split-string (buffer-substring-no-properties start end) "\n" t))
    ",\n"))
@@ -530,7 +547,7 @@ Doubles the image data, otherwise it's too tiny to look at."
         (width (number-to-string (* 2 (pico8--line-length start)))))
     (create-image
      (concat "/* XPM */\nstatic char *xpm[] ={\n"
-             "\"" width " " height " 16 1\",\n"
+             "\"" width " " height " 32 1\",\n"
              pico8--palette
              (pico8--get-scaled-image-data start end))
      'xpm t)))
