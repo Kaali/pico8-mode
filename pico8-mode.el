@@ -65,6 +65,16 @@ Enables documentation annotations with eldoc and company"
   :type 'boolean
   :group 'pico8)
 
+(defcustom pico8-use-font nil
+  "If enabled, then apply the blocky PICO-8 font to the buffer."
+  :type 'boolean
+  :group 'pico8)
+
+(defcustom pico8-set-column-fill t
+  "If enabled, set column fill to 32. This represents what can be shown on one line in the pico-8 application."
+  :type 'boolean
+  :group 'pico8)
+
 (defcustom pico8-executable-path ""
   "Full path to pico8 executable."
   :type 'file
@@ -634,7 +644,14 @@ region."
              (image-type-available-p 'xpm))
     (add-hook 'before-revert-hook 'pico8--remove-image-overlays)
     (add-hook 'after-revert-hook 'pico8--create-image-overlays)
-    (pico8--create-image-overlays)))
+    (pico8--create-image-overlays))
+    (when pico8-set-column-fill
+        (set-fill-column 32))
+    (when pico8-use-font
+        (if (find-font (font-spec :family "PICO-8"))
+            (progn (setq buffer-face-mode-face '(:family "PICO-8"))
+                (buffer-face-mode))
+            (message "No 'PICO-8' font installed. Available here: https://www.lexaloffle.com/bbs/?tid=3760"))))
 
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.p8\\'" . pico8-mode))
